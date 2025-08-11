@@ -5,7 +5,7 @@ import ClockIcon from "./icons/Clock";
 import RefreshIcon from "./icons/Refresh";
 import CpuIcon from "./icons/Cpu";
 import PowerIcon from "./icons/Power";
-// uhsdjk
+
 const DeviceCard = ({
   device,
   onEdit,
