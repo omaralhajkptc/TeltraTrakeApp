@@ -1,3 +1,4 @@
+// src/components/DeviceForm.jsx
 import React, { useState, useEffect } from "react";
 import { useDeviceContext } from "../context/DeviceContext";
 import {
@@ -32,7 +33,6 @@ const DeviceForm = ({ onClose, editData }) => {
         deviceType: editData.deviceType || "other",
       });
 
-      // Pre-fill custom date/time if editing existing device
       if (editData.dateAdded) {
         const dateObj = new Date(editData.dateAdded);
         const dateStr = dateObj.toISOString().split("T")[0];
@@ -54,7 +54,6 @@ const DeviceForm = ({ onClose, editData }) => {
     if (!formData.name.trim()) newErrors.name = "Device name is required";
     if (!formData.simCard.trim()) newErrors.simCard = "SIM card is required";
 
-    // Validate custom date/time if enabled
     if (useCustomDate) {
       if (!customDate) newErrors.customDate = "Date is required";
       if (!customTime) newErrors.customTime = "Time is required";
@@ -75,7 +74,6 @@ const DeviceForm = ({ onClose, editData }) => {
     }
 
     try {
-      // Determine dateAdded value
       let dateAddedValue;
       if (useCustomDate && customDate && customTime) {
         dateAddedValue = new Date(`${customDate}T${customTime}`).toISOString();
@@ -105,19 +103,18 @@ const DeviceForm = ({ onClose, editData }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      {/* Overlay background with 50% opacity */}
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div
         className="absolute inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
 
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-scaleIn relative z-10"
+        className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-scaleIn relative z-10 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center border-b p-5">
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="flex justify-between items-center border-b p-4 sm:p-5">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
             <FiHardDrive />
             {editData ? "Edit Device" : "Add New Device"}
           </h2>
@@ -129,8 +126,8 @@ const DeviceForm = ({ onClose, editData }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5">
-          <div className="mb-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5">
+          <div className="mb-4 sm:mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
               <FiType size={16} />
               Device Name
@@ -140,10 +137,10 @@ const DeviceForm = ({ onClose, editData }) => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
+              className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
                 errors.name ? "border-red-500" : "border-gray-300"
               }`}
-              placeholder="e.g., Security Camera - Front Door"
+              placeholder="e.g., Security Camera"
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -152,7 +149,7 @@ const DeviceForm = ({ onClose, editData }) => {
             )}
           </div>
 
-          <div className="mb-5">
+          <div className="mb-4 sm:mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
               <FiCpu size={16} />
               SIM Card Number
@@ -162,7 +159,7 @@ const DeviceForm = ({ onClose, editData }) => {
               name="simCard"
               value={formData.simCard}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
+              className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
                 errors.simCard ? "border-red-500" : "border-gray-300"
               }`}
               placeholder="e.g., SIM-123456"
@@ -174,7 +171,7 @@ const DeviceForm = ({ onClose, editData }) => {
             )}
           </div>
 
-          <div className="mb-5">
+          <div className="mb-4 sm:mb-5">
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
               <FiHardDrive size={16} />
               Device Type
@@ -183,7 +180,7 @@ const DeviceForm = ({ onClose, editData }) => {
               name="deviceType"
               value={formData.deviceType}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+              className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
             >
               <option value="camera">Camera</option>
               <option value="sensor">Sensor</option>
@@ -194,8 +191,8 @@ const DeviceForm = ({ onClose, editData }) => {
             </select>
           </div>
 
-          {/* Custom Date/Time Section */}
-          <div className="mb-5">
+          {/* Custom Date/Time */}
+          <div className="mb-4 sm:mb-5">
             <label className="flex items-center gap-2 cursor-pointer mb-2">
               <input
                 type="checkbox"
@@ -209,7 +206,7 @@ const DeviceForm = ({ onClose, editData }) => {
             </label>
 
             {useCustomDate && (
-              <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     <FiCalendar size={14} />
@@ -219,7 +216,7 @@ const DeviceForm = ({ onClose, editData }) => {
                     type="date"
                     value={customDate}
                     onChange={(e) => setCustomDate(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
                       errors.customDate ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -238,7 +235,7 @@ const DeviceForm = ({ onClose, editData }) => {
                     type="time"
                     value={customTime}
                     onChange={(e) => setCustomTime(e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
                       errors.customTime ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -263,21 +260,21 @@ const DeviceForm = ({ onClose, editData }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              className="px-4 py-2 sm:px-5 sm:py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-5 py-2.5 rounded-lg text-white flex items-center transition-colors font-medium ${
+              className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg text-white flex items-center transition-colors font-medium text-sm sm:text-base ${
                 isSubmitting
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              <FiSave className="mr-2" />
-              {editData ? "Update Device" : "Add Device"}
+              <FiSave className="mr-1 sm:mr-2" />
+              {editData ? "Update" : "Add"}
               {isSubmitting && (
                 <span className="ml-2">
                   <svg
