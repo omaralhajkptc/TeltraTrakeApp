@@ -2,11 +2,22 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 
 const DeviceTypeContext = createContext();
 
+// Fallback to localhost in development
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
 export const useDeviceTypeContext = () => useContext(DeviceTypeContext);
 
 export const DeviceTypeProvider = ({ children }) => {
   const [deviceTypes, setDeviceTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Sample data for development fallback
+  const sampleDeviceTypes = [
+    { id: 1, name: "Camera" },
+    { id: 2, name: "Tablet" },
+    { id: 3, name: "Push To Talk" },
+  ];
 
   useEffect(() => {
     fetchDeviceTypes();
@@ -14,19 +25,27 @@ export const DeviceTypeProvider = ({ children }) => {
 
   const fetchDeviceTypes = async () => {
     try {
-      const response = await fetch("http://localhost:3001/deviceTypes");
+      const response = await fetch(`${API_URL}/deviceTypes`);
+      if (!response.ok) throw new Error("Failed to fetch device types");
+
       const data = await response.json();
       setDeviceTypes(data);
-      setIsLoading(false);
+      setError(null);
     } catch (error) {
       console.error("Error fetching device types:", error);
+      setError("Failed to load device types");
+
+      // Use sample data only in development
+      if (import.meta.env.DEV) {
+        setDeviceTypes(sampleDeviceTypes);
+      }
+    } finally {
       setIsLoading(false);
     }
   };
 
   const addDeviceType = async (typeName) => {
     try {
-      // FIX: Use typeName instead of type
       const trimmedType = typeName.trim();
 
       // Check if type already exists
@@ -34,11 +53,16 @@ export const DeviceTypeProvider = ({ children }) => {
         throw new Error("Device type already exists");
       }
 
-      const response = await fetch("http://localhost:3001/deviceTypes", {
+      const response = await fetch(`${API_URL}/deviceTypes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: trimmedType }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add device type");
+      }
 
       const newType = await response.json();
       setDeviceTypes((prev) => [...prev, newType]);
@@ -51,9 +75,15 @@ export const DeviceTypeProvider = ({ children }) => {
 
   const removeDeviceType = async (id) => {
     try {
-      await fetch(`http://localhost:3001/deviceTypes/${id}`, {
+      const response = await fetch(`${API_URL}/deviceTypes/${id}`, {
         method: "DELETE",
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete device type");
+      }
+
       setDeviceTypes((prev) => prev.filter((type) => type.id !== id));
     } catch (error) {
       console.error("Error removing device type:", error);
@@ -68,6 +98,7 @@ export const DeviceTypeProvider = ({ children }) => {
         addDeviceType,
         removeDeviceType,
         isLoading,
+        error,
       }}
     >
       {children}

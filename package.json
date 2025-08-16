@@ -1,7 +1,7 @@
 {
-  "name": "teltratrakeapp",
+  "name": "device-manager-backend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "server": "json-server --watch data/db.json --port 3001",

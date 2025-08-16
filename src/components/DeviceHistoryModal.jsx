@@ -10,7 +10,7 @@ const DeviceHistoryModal = ({ device, onClose }) => {
           <h2 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center gap-2">
             <FiRefreshCw className="text-blue-600" />
             <span className="hidden sm:inline">SIM Card History - </span>
-            <span className="text-blue-600 truncate max-w-[120px] sm:max-w-none">
+            <span className="text-blue-600 truncate max-w-[120px] ">
               {device.name}
             </span>
           </h2>

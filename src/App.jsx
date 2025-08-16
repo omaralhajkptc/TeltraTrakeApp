@@ -11,15 +11,17 @@ import Footer from "./components/Footer"; // Import the new Footer component
 import axios from "axios";
 
 // Set base URL for API
-axios.defaults.baseURL = "http://localhost:3001";
+axios.defaults.baseURL = "https://device-manager-backend.onrender.com";
 
 function App() {
+  useEffect(() => {
+    console.log("API Base URL:", import.meta.env.VITE_API_BASE_URL);
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  // نحدد ما إذا كنا على جهاز محمول لتطبيق سلووكات محددة للجوال
+
   const isMobile = window.innerWidth < 768;
   const [isInitializing, setIsInitializing] = useState(true); // New state for initialization
 
-  // دالة لإغلاق الشريط الجانبي
   const handleSidebarClose = () => {
     setSidebarOpen(false);
   };

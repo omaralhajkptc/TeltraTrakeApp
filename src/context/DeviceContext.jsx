@@ -10,7 +10,30 @@ import axios from "axios";
 
 const DeviceContext = createContext();
 
-const API_URL = "http://localhost:3001";
+// Fallback to localhost in development
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+
+// Sample data for development fallback
+const getSampleDevices = () => [
+  {
+    id: 1,
+    name: "Sample Device 1",
+    simCard: "123456",
+    deviceType: "Camera",
+    dateAdded: new Date().toISOString(),
+    status: "active",
+    history: [],
+  },
+  {
+    id: 2,
+    name: "Sample Device 2",
+    simCard: "789012",
+    deviceType: "Tablet",
+    dateAdded: new Date().toISOString(),
+    status: "inactive",
+    history: [],
+  },
+];
 
 // Helper: Build simTransfers from devices
 const getSimTransfersFromDevices = (devices) => {
@@ -73,7 +96,12 @@ export const DeviceProvider = ({ children }) => {
     } catch (err) {
       setError("Failed to load data from server");
       console.error("API Error:", err);
-      setDevices(getSampleDevices());
+
+      // Use sample data only in development
+      if (import.meta.env.DEV) {
+        setDevices(getSampleDevices());
+        setFilteredDevices(getSampleDevices());
+      }
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +189,11 @@ export const DeviceProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       console.error("API update failed:", err);
-      return { success: false, message: "API update failed" };
+      return {
+        success: false,
+        message: "API update failed",
+        details: err.response?.data || err.message,
+      };
     }
   };
 
@@ -180,10 +212,15 @@ export const DeviceProvider = ({ children }) => {
       return response.data;
     } catch (err) {
       console.error("Add device error:", err);
-      // Fallback to local state if API fails, useful for testing
-      const localNewDevice = { ...newDevice, id: Date.now() };
-      setDevices([...devices, localNewDevice]);
-      return localNewDevice;
+
+      // Fallback to local state only in development
+      if (import.meta.env.DEV) {
+        const localNewDevice = { ...newDevice, id: Date.now() };
+        setDevices([...devices, localNewDevice]);
+        return localNewDevice;
+      }
+
+      throw err;
     }
   };
 
@@ -193,6 +230,7 @@ export const DeviceProvider = ({ children }) => {
       setDevices(devices.filter((device) => device.id !== id));
     } catch (err) {
       console.error("Delete error:", err);
+      throw err;
     }
   };
 
@@ -209,6 +247,7 @@ export const DeviceProvider = ({ children }) => {
       setDevices(devices.map((d) => (d.id === id ? response.data : d)));
     } catch (err) {
       console.error("Status toggle error:", err);
+      throw err;
     }
   };
 

@@ -5,7 +5,7 @@
       "simCard": "kjkj",
       "deviceType": "other",
       "dateAdded": "2025-08-16T07:01:37.759Z",
-      "status": "active",
+      "status": "inactive",
       "history": [
         {
           "oldSim": "35667",
@@ -17,7 +17,7 @@
     },
     {
       "name": "T6203",
-      "simCard": "222",
+      "simCard": "pkpk",
       "deviceType": "Push To Talk",
       "dateAdded": "2025-08-16T07:02:07.394Z",
       "status": "active",
@@ -31,6 +31,11 @@
           "oldSim": "kjkj",
           "newSim": "222",
           "changedAt": "2025-08-16T07:09:38.626Z"
+        },
+        {
+          "oldSim": "222",
+          "newSim": "pkpk",
+          "changedAt": "2025-08-16T07:59:43.691Z"
         }
       ],
       "id": 2
