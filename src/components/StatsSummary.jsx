@@ -1,13 +1,13 @@
 import React from "react";
 import ActivityIcon from "./icons/Activity";
 import WifiOffIcon from "./icons/WifiOff";
-import RefreshIcon from "./icons/Refresh";
+import AlertTriangleIcon from "./icons/AlertTriangle";
 import DatabaseIcon from "./icons/Database";
 
 const StatsSummary = ({
   activeDevices,
   inactiveDevices,
-  devicesWithHistory,
+  warningDevices,
   totalDevices,
   onStatClick,
 }) => {
@@ -29,18 +29,18 @@ const StatsSummary = ({
       filterType: "inactive",
     },
     {
-      title: "SIM Changes",
-      value: devicesWithHistory,
-      icon: <RefreshIcon className="text-blue-600" size={24} />,
-      color: "blue",
-      percent: totalDevices > 0 ? (devicesWithHistory / totalDevices) * 100 : 0,
-      filterType: "hasHistory",
+      title: "Warning Devices",
+      value: warningDevices,
+      icon: <AlertTriangleIcon className="text-yellow-600" size={24} />,
+      color: "yellow",
+      percent: totalDevices > 0 ? (warningDevices / totalDevices) * 100 : 0,
+      filterType: "warning",
     },
     {
       title: "Total Devices",
       value: totalDevices,
-      icon: <DatabaseIcon className="text-purple-600" size={24} />,
-      color: "purple",
+      icon: <DatabaseIcon className="text-blue-600" size={24} />,
+      color: "blue",
       percent: 100,
       filterType: "all",
     },
@@ -52,11 +52,13 @@ const StatsSummary = ({
         <div
           key={index}
           onClick={() => onStatClick(stat.filterType)}
-          className="bg-white rounded-xl shadow-sm p-5 transition-all hover:shadow-md cursor-pointer group border border-gray-100 hover:border-blue-200"
+          className={`bg-white hover:bg-${stat.color}-50 hover:-translate-y-0.5 duration-150 rounded-xl shadow-sm p-5 transition-all hover:shadow-md cursor-pointer group border border-gray-100 hover:border-blue-200`}
         >
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">{stat.title}</p>
+              <p className={`text-sm text-${stat.color}-500 mb-1`}>
+                {stat.title}
+              </p>
               <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
             </div>
             <div

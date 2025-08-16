@@ -1,0 +1,75 @@
+{
+  "devices": [
+    {
+      "name": "T634",
+      "simCard": "94797864",
+      "deviceType": "other",
+      "dateAdded": "2025-08-14T11:39:24.484Z",
+      "status": "active",
+      "history": [],
+      "id": 1
+    },
+    {
+      "name": "T620",
+      "simCard": "12669",
+      "deviceType": "other",
+      "dateAdded": "2025-08-14T11:43:33.610Z",
+      "status": "active",
+      "history": [],
+      "id": 2
+    },
+    {
+      "name": "T63454",
+      "simCard": "947978644",
+      "deviceType": "other",
+      "dateAdded": "2025-08-14T11:58:47.264Z",
+      "status": "active",
+      "history": [],
+      "id": 4
+    },
+    {
+      "name": "T63476",
+      "simCard": "7567789",
+      "deviceType": "mobile",
+      "dateAdded": "2025-08-14T12:23:02.526Z",
+      "status": "active",
+      "history": [],
+      "id": 6
+    },
+    {
+      "name": "T6201",
+      "simCard": "94793",
+      "deviceType": "Camera",
+      "dateAdded": "2025-08-16T05:38:59.047Z",
+      "status": "active",
+      "history": [],
+      "id": 7
+    }
+  ],
+  "deviceTypes": [
+    {
+      "name": "other",
+      "id": 1
+    },
+    {
+      "name": "Push To Talk",
+      "id": 2
+    },
+    {
+      "name": "Push To Talk 2",
+      "id": 3
+    },
+    {
+      "name": "Camera",
+      "id": 4
+    },
+    {
+      "name": "mobile",
+      "id": 5
+    },
+    {
+      "name": "Tablet",
+      "id": 6
+    }
+  ]
+}

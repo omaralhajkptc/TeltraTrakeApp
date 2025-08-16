@@ -54,7 +54,7 @@ const DeviceHistoryModal = ({ device, onClose }) => {
                         </div>
                       </div>
                       <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
-                        #{device.history.length - index}
+                        #{index + 1}
                       </span>
                     </div>
 

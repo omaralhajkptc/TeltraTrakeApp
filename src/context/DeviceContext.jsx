@@ -1,8 +1,17 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
+import axios from "axios";
 
 const DeviceContext = createContext();
 
-// Sample devices moved to top as requested
+const API_URL = "http://localhost:3001";
+
 const getSampleDevices = () => [
   {
     id: 1,
@@ -79,6 +88,40 @@ const getSampleDevices = () => [
   },
 ];
 
+// Helper: Build simTransfers from devices
+const getSimTransfersFromDevices = (devices) => {
+  const transfers = [];
+
+  devices.forEach((device) => {
+    // Initial assignment
+    transfers.push({
+      sim: device.simCard,
+      fromDevice: null,
+      toDevice: { id: device.id, name: device.name },
+      timestamp: device.dateAdded,
+    });
+
+    // History
+    device.history.forEach((historyItem) => {
+      transfers.push({
+        sim: historyItem.oldSim,
+        fromDevice: { id: device.id, name: device.name },
+        toDevice: null,
+        timestamp: historyItem.changedAt,
+      });
+
+      transfers.push({
+        sim: historyItem.newSim,
+        fromDevice: null,
+        toDevice: { id: device.id, name: device.name },
+        timestamp: historyItem.changedAt,
+      });
+    });
+  });
+
+  return transfers;
+};
+
 export const useDeviceContext = () => useContext(DeviceContext);
 
 export const DeviceProvider = ({ children }) => {
@@ -92,43 +135,30 @@ export const DeviceProvider = ({ children }) => {
     searchTerm: "",
   });
 
-  // Initialize devices from localStorage
-  useEffect(() => {
-    const loadDevices = () => {
-      try {
-        const savedDevices = localStorage.getItem("devices");
-        if (savedDevices) {
-          return JSON.parse(savedDevices);
-        }
-        const sampleDevices = getSampleDevices();
-        localStorage.setItem("devices", JSON.stringify(sampleDevices));
-        return sampleDevices;
-      } catch (error) {
-        console.error("Error loading devices:", error);
-        return getSampleDevices();
-      }
-    };
+  // Compute transfers directly from devices using useMemo
+  const simTransfers = useMemo(() => {
+    return getSimTransfersFromDevices(devices);
+  }, [devices]);
 
+  const fetchDevices = useCallback(async () => {
     setIsLoading(true);
     try {
-      const loadedDevices = loadDevices();
-      setDevices(loadedDevices);
-      setFilteredDevices(loadedDevices);
+      const response = await axios.get(`${API_URL}/devices`);
+      setDevices(response.data);
+      setFilteredDevices(response.data);
     } catch (err) {
-      setError("Failed to load devices");
+      setError("Failed to load data from server");
+      console.error("API Error:", err);
+      setDevices(getSampleDevices());
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Persist to localStorage
   useEffect(() => {
-    if (devices.length > 0) {
-      localStorage.setItem("devices", JSON.stringify(devices));
-    }
-  }, [devices]);
+    fetchDevices();
+  }, [fetchDevices]);
 
-  // Apply filters whenever they change
   useEffect(() => {
     applyFilters(currentFilters);
   }, [currentFilters, devices]);
@@ -164,151 +194,94 @@ export const DeviceProvider = ({ children }) => {
     return devices.find((device) => device.id === id);
   };
 
-  // For backend readiness: All CRUD operations have async versions commented out
-  const addDevice = (device) => {
-    /* Backend version:
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/devices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(device)
-      });
-      const newDevice = await response.json();
-      setDevices(prev => [...prev, newDevice]);
-      return newDevice;
-    } catch (err) {
-      setError("Failed to add device");
-    } finally {
-      setIsLoading(false);
-    }
-    */
+  const updateSimCard = async (id, newSim) => {
+    const device = devices.find((d) => d.id === id);
+    if (!device) return { success: false, message: "Device not found" };
 
-    // Local version
+    const newSimTrimmed = newSim.trim();
+
+    // Check if SIM is already used by another device
+    const simInUse = devices.some(
+      (d) => d.id !== id && d.simCard === newSimTrimmed
+    );
+
+    if (simInUse) {
+      return {
+        success: false,
+        message: "SIM number is already in use by another device",
+      };
+    }
+
+    const now = new Date().toISOString();
+    const oldSim = device.simCard;
+
+    const historyEntry = {
+      oldSim,
+      newSim: newSimTrimmed,
+      changedAt: now,
+    };
+
+    try {
+      const response = await axios.put(`${API_URL}/devices/${id}`, {
+        ...device,
+        simCard: newSimTrimmed,
+        history: [...device.history, historyEntry],
+      });
+      setDevices(devices.map((d) => (d.id === id ? response.data : d)));
+      return { success: true };
+    } catch (err) {
+      console.error("API update failed:", err);
+      return { success: false, message: "API update failed" };
+    }
+  };
+
+  const addDevice = async (device) => {
+    const now = new Date().toISOString();
     const newDevice = {
       ...device,
-      id: Date.now(),
-      dateAdded: new Date().toISOString(),
+      dateAdded: now,
       status: "active",
       history: [],
     };
 
-    setDevices([...devices, newDevice]);
-    return newDevice;
+    try {
+      const response = await axios.post(`${API_URL}/devices`, newDevice);
+      setDevices([...devices, response.data]);
+      return response.data;
+    } catch (err) {
+      console.error("Add device error:", err);
+      // Fallback to local state if API fails, useful for testing
+      const localNewDevice = { ...newDevice, id: Date.now() };
+      setDevices([...devices, localNewDevice]);
+      return localNewDevice;
+    }
   };
 
-  const updateDevice = (id, updatedData) => {
-    /* Backend version:
-    setIsLoading(true);
+  const deleteDevice = async (id) => {
     try {
-      const response = await fetch(`/api/devices/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedData)
+      await axios.delete(`${API_URL}/devices/${id}`);
+      setDevices(devices.filter((device) => device.id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
+
+  const toggleDeviceStatus = async (id) => {
+    const device = devices.find((d) => d.id === id);
+    if (!device) return;
+
+    const newStatus = device.status === "active" ? "inactive" : "active";
+
+    try {
+      const response = await axios.patch(`${API_URL}/devices/${id}`, {
+        status: newStatus,
       });
-      const updatedDevice = await response.json();
-      setDevices(prev => 
-        prev.map(device => device.id === id ? updatedDevice : device)
-      );
-      return updatedDevice;
+      setDevices(devices.map((d) => (d.id === id ? response.data : d)));
     } catch (err) {
-      setError("Failed to update device");
-    } finally {
-      setIsLoading(false);
+      console.error("Status toggle error:", err);
     }
-    */
-
-    // Local version
-    setDevices(
-      devices.map((device) =>
-        device.id === id ? { ...device, ...updatedData } : device
-      )
-    );
   };
 
-  const updateSimCard = (id, newSim) => {
-    /* Backend version:
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/devices/${id}/sim`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newSim })
-      });
-      const updatedDevice = await response.json();
-      setDevices(prev => 
-        prev.map(device => device.id === id ? updatedDevice : device)
-      );
-      return updatedDevice;
-    } catch (err) {
-      setError("Failed to update SIM card");
-    } finally {
-      setIsLoading(false);
-    }
-    */
-
-    // Local version
-    setDevices(
-      devices.map((device) => {
-        if (device.id !== id) return device;
-
-        const historyEntry = {
-          oldSim: device.simCard,
-          newSim,
-          changedAt: new Date().toISOString(),
-        };
-
-        return {
-          ...device,
-          simCard: newSim,
-          history: [...device.history, historyEntry],
-        };
-      })
-    );
-  };
-
-  const deleteDevice = (id) => {
-    /* Backend version:
-    setIsLoading(true);
-    try {
-      await fetch(`/api/devices/${id}`, { method: "DELETE" });
-      setDevices(prev => prev.filter(device => device.id !== id));
-    } catch (err) {
-      setError("Failed to delete device");
-    } finally {
-      setIsLoading(false);
-    }
-    */
-
-    // Local version
-    setDevices(devices.filter((device) => device.id !== id));
-  };
-
-  const toggleDeviceStatus = (id) => {
-    /* Backend version:
-    setIsLoading(true);
-    try {
-      const device = getDeviceById(id);
-      const newStatus = device.status === "active" ? "inactive" : "active";
-      await updateDevice(id, { status: newStatus });
-    } catch (err) {
-      setError("Failed to toggle status");
-    } finally {
-      setIsLoading(false);
-    }
-    */
-
-    // Local version
-    setDevices(
-      devices.map((device) => {
-        if (device.id !== id) return device;
-        const newStatus = device.status === "active" ? "inactive" : "active";
-        return { ...device, status: newStatus };
-      })
-    );
-  };
-
-  // Get unique values for filter dropdowns
   const getUniqueStatuses = () => {
     return [...new Set(devices.map((device) => device.status))];
   };
@@ -326,7 +299,6 @@ export const DeviceProvider = ({ children }) => {
         error,
         getDeviceById,
         addDevice,
-        updateDevice,
         updateSimCard,
         deleteDevice,
         toggleDeviceStatus,
@@ -334,6 +306,7 @@ export const DeviceProvider = ({ children }) => {
         getUniqueStatuses,
         getUniqueDeviceTypes,
         currentFilters,
+        simTransfers,
       }}
     >
       {children}
