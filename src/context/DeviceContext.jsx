@@ -12,82 +12,6 @@ const DeviceContext = createContext();
 
 const API_URL = "http://localhost:3001";
 
-const getSampleDevices = () => [
-  {
-    id: 1,
-    name: "Security Camera - Front Door",
-    simCard: "SIM-123456",
-    dateAdded: "2023-05-15T08:30:00Z",
-    status: "active",
-    deviceType: "camera",
-    history: [
-      {
-        oldSim: "SIM-111111",
-        newSim: "SIM-123456",
-        changedAt: "2023-08-22T14:30:00Z",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Smart Meter - Floor 2",
-    simCard: "SIM-789012",
-    dateAdded: "2023-06-20T10:15:00Z",
-    status: "active",
-    deviceType: "meter",
-    history: [],
-  },
-  {
-    id: 3,
-    name: "Vehicle Tracker - Truck #5",
-    simCard: "SIM-345678",
-    dateAdded: "2023-07-10T13:45:00Z",
-    status: "inactive",
-    deviceType: "tracker",
-    history: [
-      {
-        oldSim: "SIM-222222",
-        newSim: "SIM-345678",
-        changedAt: "2023-09-05T09:15:00Z",
-      },
-      {
-        oldSim: "SIM-345678",
-        newSim: "SIM-999999",
-        changedAt: "2023-10-12T16:20:00Z",
-      },
-      {
-        oldSim: "SIM-999999",
-        newSim: "SIM-345678",
-        changedAt: "2023-11-18T11:30:00Z",
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: "POS Terminal - Store #3",
-    simCard: "SIM-456789",
-    dateAdded: "2023-08-05T09:00:00Z",
-    status: "active",
-    deviceType: "terminal",
-    history: [],
-  },
-  {
-    id: 5,
-    name: "Environmental Sensor - Warehouse",
-    simCard: "SIM-567890",
-    dateAdded: "2023-09-12T14:20:00Z",
-    status: "warning",
-    deviceType: "sensor",
-    history: [
-      {
-        oldSim: "SIM-000000",
-        newSim: "SIM-567890",
-        changedAt: "2023-10-01T11:45:00Z",
-      },
-    ],
-  },
-];
-
 // Helper: Build simTransfers from devices
 const getSimTransfersFromDevices = (devices) => {
   const transfers = [];
@@ -206,9 +130,15 @@ export const DeviceProvider = ({ children }) => {
     );
 
     if (simInUse) {
+      const conflictingDevice = devices.find(
+        (d) => d.id !== id && d.simCard === newSimTrimmed
+      );
+
       return {
         success: false,
-        message: "SIM number is already in use by another device",
+        message: `SIM is already used by ${
+          conflictingDevice?.name || "another device"
+        }`,
       };
     }
 

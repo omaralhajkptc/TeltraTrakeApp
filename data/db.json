@@ -2,48 +2,58 @@
   "devices": [
     {
       "name": "T634",
-      "simCard": "94797864",
+      "simCard": "kjkj",
       "deviceType": "other",
-      "dateAdded": "2025-08-14T11:39:24.484Z",
+      "dateAdded": "2025-08-16T07:01:37.759Z",
       "status": "active",
-      "history": [],
+      "history": [
+        {
+          "oldSim": "35667",
+          "newSim": "kjkj",
+          "changedAt": "2025-08-16T07:09:41.669Z"
+        }
+      ],
       "id": 1
     },
     {
-      "name": "T620",
-      "simCard": "12669",
-      "deviceType": "other",
-      "dateAdded": "2025-08-14T11:43:33.610Z",
+      "name": "T6203",
+      "simCard": "222",
+      "deviceType": "Push To Talk",
+      "dateAdded": "2025-08-16T07:02:07.394Z",
       "status": "active",
-      "history": [],
+      "history": [
+        {
+          "oldSim": "7567789",
+          "newSim": "kjkj",
+          "changedAt": "2025-08-16T07:02:53.452Z"
+        },
+        {
+          "oldSim": "kjkj",
+          "newSim": "222",
+          "changedAt": "2025-08-16T07:09:38.626Z"
+        }
+      ],
       "id": 2
     },
     {
-      "name": "T63454",
-      "simCard": "947978644",
-      "deviceType": "other",
-      "dateAdded": "2025-08-14T11:58:47.264Z",
-      "status": "active",
-      "history": [],
-      "id": 4
-    },
-    {
-      "name": "T63476",
-      "simCard": "7567789",
-      "deviceType": "mobile",
-      "dateAdded": "2025-08-14T12:23:02.526Z",
-      "status": "active",
-      "history": [],
-      "id": 6
-    },
-    {
-      "name": "T6201",
-      "simCard": "94793",
+      "name": "T6709",
+      "simCard": "111",
       "deviceType": "Camera",
-      "dateAdded": "2025-08-16T05:38:59.047Z",
+      "dateAdded": "2025-08-16T07:02:32.130Z",
       "status": "active",
-      "history": [],
-      "id": 7
+      "history": [
+        {
+          "oldSim": "508999",
+          "newSim": "kjkj",
+          "changedAt": "2025-08-16T07:02:42.898Z"
+        },
+        {
+          "oldSim": "kjkj",
+          "newSim": "111",
+          "changedAt": "2025-08-16T07:02:49.695Z"
+        }
+      ],
+      "id": 3
     }
   ],
   "deviceTypes": [
@@ -56,20 +66,16 @@
       "id": 2
     },
     {
-      "name": "Push To Talk 2",
+      "name": "Camera",
       "id": 3
     },
     {
-      "name": "Camera",
+      "name": "mobile",
       "id": 4
     },
     {
-      "name": "mobile",
-      "id": 5
-    },
-    {
       "name": "Tablet",
-      "id": 6
+      "id": 5
     }
   ]
 }

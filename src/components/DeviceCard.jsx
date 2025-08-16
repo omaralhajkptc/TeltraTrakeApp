@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from "react";
-// Importing icons from lucide-react instead of local files to resolve compilation errors.
-// import {
-//   Edit as EditIcon,
-//   Trash2 as TrashIcon,
-//   History as ClockIcon,
-//   Lock as LockClosedIcon,
-//   Unlock as LockOpenIcon,
-//   Cpu as ChipIcon,
-// } from "lucide-react";
-
-import Edit from "./icons/Edit";
-import Trash from "./icons/Trash";
-import Clock from "./icons/Clock";
-import LockClosed from "./icons/LockClosed";
-import LockOpen from "./icons/LockOpen";
-import Chip from "./icons/Chip";
+import EditIcon from "./icons/Edit";
+import TrashIcon from "./icons/Trash";
+import ClockIcon from "./icons/Clock";
+import RefreshIcon from "./icons/Refresh";
+import CpuIcon from "./icons/Cpu";
+import PowerIcon from "./icons/Power";
+import Spinner from "./icons/Spinner";
 
 const DeviceCard = ({
   device,
@@ -22,374 +13,395 @@ const DeviceCard = ({
   onDelete,
   onHistory,
   onStatusToggle,
-  onSimUpdate, // Ensure this is passed as a prop
+  newSim,
+  onSimChange,
+  onSimUpdate,
   viewMode = "grid",
+  isUpdating = false,
+  updateError = null,
 }) => {
-  const status = device.status || "unknown";
+  const status = device?.status || "unknown";
   const statusText = status.charAt(0).toUpperCase() + status.slice(1);
-
   const [showSimUpdate, setShowSimUpdate] = useState(false);
-  // Initialize newSim state with the current device.simCard
-  const [newSim, setNewSim] = useState(device.simCard);
-  const [simError, setSimError] = useState(null);
-  const [simUpdating, setSimUpdating] = useState(false); // New state variable for loading
+  const [expanded, setExpanded] = useState(false);
+  const [localUpdateError, setLocalUpdateError] = useState(null);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
 
-  // Function to determine status-based Tailwind CSS classes
-  const getStatusClasses = () => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "inactive":
-        return "bg-red-100 text-red-800";
-      case "warning":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  useEffect(() => {
+    if (updateError) {
+      setLocalUpdateError(updateError);
+    } else if (newSim) {
+      setLocalUpdateError(null);
+    }
+  }, [newSim, updateError]);
+
+  const toggleSimUpdate = () => {
+    setShowSimUpdate(!showSimUpdate);
+    setLocalUpdateError(null);
+    if (showSimUpdate) {
+      onSimChange("");
     }
   };
 
-  // Handles the update of the SIM card number
   const handleSimUpdate = async () => {
     if (!newSim.trim()) {
-      setSimError("SIM number cannot be empty");
+      setLocalUpdateError("SIM number cannot be empty");
       return;
     }
 
-    setSimUpdating(true); // Set loading state to true
-    // Call onSimUpdate with device ID and new SIM number
-    const result = await onSimUpdate(device.id, newSim);
-    setSimUpdating(false); // Set loading state to false
-
-    if (result && !result.success) {
-      setSimError(result.message);
-    } else {
+    try {
+      await onSimUpdate();
       setShowSimUpdate(false);
-      setSimError(null);
+    } catch (error) {
+      setLocalUpdateError(error.message || "Failed to update SIM");
     }
   };
 
-  // Helper function to prevent event propagation for button clicks
-  const handleButtonClick = (action) => (event) => {
-    event.stopPropagation();
-    action();
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && newSim.trim()) {
+      handleSimUpdate();
+    }
   };
 
-  // List view rendering
-  if (viewMode === "list") {
-    return (
-      <tr className="hover:bg-gray-50">
-        <td className="px-4 py-4">
-          <div className="text-sm font-medium text-gray-900">{device.name}</div>
-          <div className="text-xs text-gray-500">ID: {device.id}</div>
-          {device.deviceType && (
-            <div className="text-xs text-blue-600 mt-1">
-              Type: {device.deviceType}
-            </div>
-          )}
-        </td>
-        <td className="px-4 py-4">
-          {showSimUpdate ? (
-            <div className="mt-1">
-              <div className="flex">
-                <input
-                  type="text"
-                  value={newSim}
-                  onChange={(e) => setNewSim(e.target.value)}
-                  className={`flex-1 border ${
-                    simError ? "border-red-300" : "border-gray-300"
-                  } rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="Enter new SIM number"
-                />
-                <button
-                  onClick={handleSimUpdate}
-                  disabled={simUpdating}
-                  className={`bg-blue-600 text-white px-4 rounded-r-lg ${
-                    simUpdating ? "opacity-70 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {simUpdating ? "Saving..." : "Save"}
-                </button>
-              </div>
-              {simError && (
-                <p className="text-red-500 text-xs mt-1">{simError}</p>
-              )}
-              <button
-                onClick={() => {
-                  setShowSimUpdate(false);
-                  setSimError(null);
-                  setNewSim(device.simCard); // Reset to original SIM
-                }}
-                className="text-gray-600 hover:text-gray-800 text-xs mt-2"
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between group">
-              <span className="text-sm font-medium text-gray-900 font-mono">
-                {device.simCard}
-              </span>
-              <button
-                onClick={() => setShowSimUpdate(true)}
-                className="text-blue-600 hover:text-blue-800 text-xs opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                title="Change SIM"
-              >
-                <Edit size={12} />
-              </button>
-            </div>
-          )}
-          {device.history.length > 0 && (
-            <div className="text-xs text-blue-600 flex items-center mt-1">
-              <Clock size={12} className="mr-1" />
-              {device.history.length} change
-              {device.history.length > 1 ? "s" : ""}
-            </div>
-          )}
-        </td>
-        <td className="px-4 py-4">
-          <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusClasses()}`}
-          >
-            {statusText}
-          </span>
-        </td>
-        <td className="px-4 py-4 text-sm text-gray-500 hidden sm:table-cell">
-          {new Date(device.dateAdded).toLocaleString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </td>
-        <td className="px-4 py-4">
-          <div className="flex space-x-2 sm:space-x-3">
-            <button
-              onClick={handleButtonClick(onEdit)}
-              className="text-blue-600 hover:text-blue-800 p-1.5 rounded-full hover:bg-blue-50 transition-colors"
-              title="Edit"
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={handleButtonClick(onDelete)}
-              className="text-red-600 hover:text-red-800 p-1.5 rounded-full hover:bg-red-50 transition-colors"
-              title="Delete"
-            >
-              <Trash size={16} />
-            </button>
-            <button
-              onClick={handleButtonClick(onHistory)}
-              className="text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-50 transition-colors"
-              title="History"
-            >
-              <Clock size={16} />
-            </button>
-            <button
-              onClick={handleButtonClick(() => onStatusToggle(device.id))}
-              className={`p-1.5 rounded-full transition-colors ${
-                device.status === "active"
-                  ? "text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
-                  : "text-green-600 hover:text-green-800 hover:bg-green-50"
-              }`}
-              title={device.status === "active" ? "Deactivate" : "Activate"}
-            >
-              {device.status === "active" ? (
-                <LockClosed size={16} />
-              ) : (
-                <LockOpen size={16} />
-              )}
-            </button>
-          </div>
-        </td>
-      </tr>
-    );
-  }
+  const handleStatusToggle = async () => {
+    setIsTogglingStatus(true);
+    try {
+      await onStatusToggle();
+    } catch (error) {
+      setLocalUpdateError(error.message || "Failed to toggle status");
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
+
+  const toggleExpanded = () => {
+    if (viewMode === "list") {
+      setExpanded(!expanded);
+    }
+  };
+
+  const handleButtonClick = (handler) => (e) => {
+    e.stopPropagation();
+    handler?.();
+  };
+
+  // Status color mapping
+  const statusColors = {
+    active: {
+      bg: "bg-green-100",
+      text: "text-green-800",
+      bar: "bg-green-500",
+      icon: "text-green-500",
+    },
+    warning: {
+      bg: "bg-yellow-100",
+      text: "text-yellow-800",
+      bar: "bg-yellow-500",
+      icon: "text-yellow-500",
+    },
+    inactive: {
+      bg: "bg-red-100",
+      text: "text-red-800",
+      bar: "bg-red-500",
+      icon: "text-red-500",
+    },
+    unknown: {
+      bg: "bg-gray-100",
+      text: "text-gray-800",
+      bar: "bg-gray-400",
+      icon: "text-gray-500",
+    },
+  };
+
+  const statusColor = statusColors[status] || statusColors.unknown;
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-md p-6 border-l-4 ${
-        status === "active"
-          ? "border-green-500"
-          : status === "warning"
-          ? "border-yellow-500"
-          : "border-red-500"
-      } hover:shadow-lg transition-all flex flex-col`}
+      className={`bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all relative ${
+        viewMode === "list"
+          ? `flex flex-row min-h-[120px] cursor-pointer ${
+              expanded ? "min-h-[280px]" : ""
+            }`
+          : "h-full flex flex-col"
+      } ${isUpdating ? "opacity-70" : ""}`}
+      onClick={toggleExpanded}
     >
-      {/* Status warning banner for inactive devices */}
-      {device.status === "inactive" && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center">
-          <LockClosed size={20} className="text-red-500 mr-2" />
-          <span className="text-red-700 font-medium text-sm">
-            This device is deactivated and not in use
-          </span>
+      {/* Loading overlay */}
+      {(isUpdating || isTogglingStatus) && (
+        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+          <Spinner size="md" />
         </div>
       )}
 
-      {/* Device Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 bg-gray-100 text-gray-600`}
-          >
-            <Chip size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 truncate max-w-[150px] sm:max-w-[200px]">
-              {device.name}
-            </h3>
-            <p className="text-sm text-gray-500 font-medium">ID: {device.id}</p>
-          </div>
-        </div>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses()}`}
-        >
-          {statusText}
-        </span>
-      </div>
+      {/* Status Indicator Bar */}
+      <div
+        className={`${statusColor.bar} ${
+          viewMode === "list" ? "w-1.5 min-h-full" : "h-1.5 w-full"
+        }`}
+      ></div>
 
-      {/* Device Information Section */}
-      <div className="mt-4 border-t border-dashed pt-4 flex-1 flex flex-col justify-between">
-        {/* Two-column layout for device info */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <p className="text-sm text-gray-600 font-medium flex items-center mb-2">
-              <Chip size={16} className="mr-2 text-blue-500" />
-              SIM Card
-            </p>
-            {showSimUpdate ? (
-              <div className="mt-1">
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={newSim}
-                    onChange={(e) => setNewSim(e.target.value)}
-                    className={`flex-1 border ${
-                      simError ? "border-red-300" : "border-gray-300"
-                    } rounded-l-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    placeholder="Enter new SIM number"
-                  />
-                  <button
-                    onClick={handleSimUpdate}
-                    disabled={simUpdating}
-                    className={`bg-blue-600 text-white px-4 rounded-r-lg ${
-                      simUpdating ? "opacity-70 cursor-not-allowed" : ""
-                    }`}
-                  >
-                    {simUpdating ? "Saving..." : "Save"}
-                  </button>
-                </div>
-                {simError && (
-                  <p className="text-red-500 text-xs mt-1">{simError}</p>
-                )}
-                <button
-                  onClick={() => {
-                    setShowSimUpdate(false);
-                    setSimError(null);
-                    setNewSim(device.simCard); // Reset to original SIM
-                  }}
-                  className="text-gray-600 hover:text-gray-800 text-xs mt-2"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between group">
-                <span className="font-mono text-gray-800 font-bold truncate">
-                  {device.simCard}
+      {/* Main Content */}
+      <div className="flex-1 p-4 flex flex-col h-full">
+        {/* Header Section */}
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-start gap-3">
+            <div className={`p-2 rounded-lg ${statusColor.bg} mt-0.5`}>
+              <CpuIcon size={20} className={statusColor.icon} />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-gray-900 text-base">
+                  {device?.name || "Unnamed Device"}
+                </h3>
+                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">
+                  {device?.deviceType || "Other"}
                 </span>
-                <button
-                  onClick={() => setShowSimUpdate(true)}
-                  className="text-blue-600 hover:text-blue-800 text-xs opacity-0 group-hover:opacity-100 transition-opacity ml-2"
-                  title="Change SIM"
-                >
-                  <Edit size={12} />
-                </button>
               </div>
-            )}
+              <p className="text-xs text-gray-500 mt-1">
+                ID: {device?.id || "N/A"}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <p className="text-sm text-gray-600 font-medium flex items-center mb-2">
-              <Clock size={16} className="mr-2 text-gray-500" />
-              Added
-            </p>
-            <p className="font-medium text-gray-800">
-              {new Date(device.dateAdded).toLocaleString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusColor.bg} ${statusColor.text}`}
+          >
+            {statusText}
+          </span>
+        </div>
+
+        {/* Info Section */}
+        <div
+          className={`grid grid-cols-2 gap-4 mb-4 flex-1 ${
+            viewMode === "list" ? "mt-2" : ""
+          }`}
+        >
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <CpuIcon size={16} className="text-gray-500 flex-shrink-0" />
+              <p className="text-xs text-gray-500">SIM Card</p>
+            </div>
+            <p className="font-mono font-medium text-gray-900 text-sm truncate">
+              {device?.simCard || "No SIM"}
             </p>
           </div>
 
-          {device.deviceType && (
-            <>
-              <div>
-                <p className="text-sm text-gray-600 font-medium flex items-center mb-2">
-                  <Chip size={16} className="mr-2 text-purple-500" />
-                  Type
-                </p>
-                <p className="font-medium text-gray-800">{device.deviceType}</p>
-              </div>
-            </>
-          )}
-
-          <div>
-            <p className="text-sm text-gray-600 font-medium flex items-center mb-2">
-              <Chip size={16} className="mr-2 text-green-500" />
-              Status
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <ClockIcon size={16} className="text-gray-500 flex-shrink-0" />
+              <p className="text-xs text-gray-500">Added</p>
+            </div>
+            <p className="text-sm text-gray-700">
+              {device?.dateAdded
+                ? new Date(device.dateAdded).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Unknown"}
             </p>
-            <span
-              className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusClasses()}`}
-            >
-              {statusText}
+          </div>
+
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <RefreshIcon size={16} className="text-gray-500 flex-shrink-0" />
+              <p className="text-xs text-gray-500">Changes</p>
+            </div>
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+              {device?.history?.length || 0}{" "}
+              {device?.history?.length === 1 ? "change" : "changes"}
             </span>
           </div>
+
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 mb-1">
+              <PowerIcon size={16} className="text-gray-500 flex-shrink-0" />
+              <p className="text-xs text-gray-500">Status</p>
+            </div>
+            <p className="text-sm font-medium text-gray-900">{statusText}</p>
+          </div>
+        </div>
+
+        {/* Expanded Details Section (List View Only) */}
+        {viewMode === "list" && expanded && (
+          <div className="border-t border-gray-100 pt-3 mb-3">
+            <h4 className="text-sm font-medium text-gray-900 mb-2">
+              Device Details
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-500 mb-1">Manufacturer</p>
+                <p className="text-sm text-gray-900">
+                  {device?.manufacturer || "Unknown"}
+                </p>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-500 mb-1">Firmware Version</p>
+                <p className="text-sm text-gray-900">
+                  {device?.firmware || "Unknown"}
+                </p>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-500 mb-1">Last Connection</p>
+                <p className="text-sm text-gray-900">
+                  {device?.lastConnection
+                    ? new Date(device.lastConnection).toLocaleString()
+                    : "Never"}
+                </p>
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs text-gray-500 mb-1">Signal Strength</p>
+                <p className="text-sm text-gray-900">
+                  {device?.signalStrength || "Unknown"}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-gray-500 mb-1">Description</p>
+                <p className="text-sm text-gray-900">
+                  {device?.description || "No description available"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SIM Update Section */}
+        <div className="mt-auto">
+          {viewMode === "grid" ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                <input
+                  type="text"
+                  value={newSim}
+                  onChange={(e) => {
+                    onSimChange(e.target.value);
+                    setLocalUpdateError(null);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Enter new SIM number"
+                  className="px-3 py-2 text-sm w-full focus:outline-none text-gray-900"
+                  disabled={isUpdating}
+                />
+                <button
+                  onClick={handleSimUpdate}
+                  className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm flex items-center transition-colors ${
+                    !newSim.trim() || isUpdating
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={!newSim.trim() || isUpdating}
+                >
+                  {isUpdating ? <Spinner size="sm" /> : "Update"}
+                </button>
+              </div>
+              {localUpdateError && (
+                <p className="text-xs text-red-500 px-1">{localUpdateError}</p>
+              )}
+              <p className="text-xs text-gray-500 text-center">
+                Press Enter or click Update to save changes
+              </p>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={handleButtonClick(toggleSimUpdate)}
+                className={`w-full py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  showSimUpdate
+                    ? "bg-gray-100 text-gray-600"
+                    : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                }`}
+                disabled={isUpdating}
+              >
+                <RefreshIcon size={16} />
+                {showSimUpdate ? "Cancel Update" : "Update SIM Card"}
+              </button>
+
+              {showSimUpdate && (
+                <div className="mt-3 flex flex-col gap-2">
+                  <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                    <input
+                      type="text"
+                      value={newSim}
+                      onChange={(e) => {
+                        onSimChange(e.target.value);
+                        setLocalUpdateError(null);
+                      }}
+                      onKeyDown={handleKeyDown}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Enter new SIM number"
+                      className="px-3 py-2 text-sm w-full focus:outline-none text-gray-900"
+                      disabled={isUpdating}
+                    />
+                    <button
+                      onClick={handleButtonClick(handleSimUpdate)}
+                      className={`bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-sm flex items-center transition-colors ${
+                        !newSim.trim() || isUpdating
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      disabled={!newSim.trim() || isUpdating}
+                    >
+                      {isUpdating ? <Spinner size="sm" /> : "Update"}
+                    </button>
+                  </div>
+                  {localUpdateError && (
+                    <p className="text-xs text-red-500 px-1">
+                      {localUpdateError}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Press Enter or click Update to save changes
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 justify-between">
-          <div className="flex flex-wrap gap-2">
+        <div
+          className="flex justify-between border-t border-gray-100 pt-3 mt-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex gap-1">
             <button
               onClick={handleButtonClick(onEdit)}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-full transition-colors shadow-sm"
-              title="Edit Device"
+              className="p-2 rounded-lg hover:bg-blue-50 transition-colors text-blue-600"
+              title="Edit"
+              disabled={isUpdating}
             >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={handleButtonClick(() => onStatusToggle(device.id))}
-              className={`${
-                device.status === "active"
-                  ? "bg-yellow-50 hover:bg-yellow-100 text-yellow-600"
-                  : "bg-green-50 hover:bg-green-100 text-green-600"
-              } p-2 rounded-full transition-colors shadow-sm`}
-              title={device.status === "active" ? "Deactivate" : "Activate"}
-            >
-              {device.status === "active" ? (
-                <LockClosed size={16} />
-              ) : (
-                <LockOpen size={16} />
-              )}
-            </button>
-            <button
-              onClick={handleButtonClick(onDelete)}
-              className="bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-full transition-colors shadow-sm"
-              title="Delete Device"
-            >
-              <Trash size={16} />
+              <EditIcon size={18} />
             </button>
             <button
               onClick={handleButtonClick(onHistory)}
-              className="bg-purple-50 hover:bg-purple-100 text-purple-600 p-2 rounded-full transition-colors shadow-sm"
-              title="View History"
+              className="p-2 rounded-lg hover:bg-green-50 transition-colors text-green-600"
+              title="History"
+              disabled={isUpdating}
             >
-              <Clock size={16} />
+              <ClockIcon size={18} />
+            </button>
+            <button
+              onClick={handleButtonClick(onDelete)}
+              className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+              title="Delete"
+              disabled={isUpdating}
+            >
+              <TrashIcon size={18} />
             </button>
           </div>
+
+          <button
+            onClick={handleButtonClick(handleStatusToggle)}
+            className={`p-2 rounded-lg transition-colors ${
+              status === "active"
+                ? "text-yellow-600 hover:bg-yellow-50"
+                : "text-green-600 hover:bg-green-50"
+            }`}
+            title={status === "active" ? "Deactivate" : "Activate"}
+            disabled={isUpdating || isTogglingStatus}
+          >
+            {isTogglingStatus ? <Spinner size="sm" /> : <PowerIcon size={18} />}
+          </button>
         </div>
       </div>
     </div>
