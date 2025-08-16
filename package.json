@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "start": "node server.js",
     "test:api": "curl -X POST -H \"Content-Type: application/json\" -d '{\"name\":\"Test Device\",\"simCard\":\"SIM-123\"}' http://localhost:3001/devices"
   },
   "dependencies": {
