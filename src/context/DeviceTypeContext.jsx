@@ -4,6 +4,7 @@ const DeviceTypeContext = createContext();
 
 // Fallback to localhost in development
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
+// const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const useDeviceTypeContext = () => useContext(DeviceTypeContext);
 

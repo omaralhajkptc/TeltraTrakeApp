@@ -59,6 +59,15 @@
         }
       ],
       "id": 3
+    },
+    {
+      "name": "T6204",
+      "simCard": "356670",
+      "deviceType": "other",
+      "dateAdded": "2025-08-16T08:37:10.772Z",
+      "status": "active",
+      "history": [],
+      "id": 4
     }
   ],
   "deviceTypes": [

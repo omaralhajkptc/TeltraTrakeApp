@@ -12,28 +12,7 @@ const DeviceContext = createContext();
 
 // Fallback to localhost in development
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-
-// Sample data for development fallback
-const getSampleDevices = () => [
-  {
-    id: 1,
-    name: "Sample Device 1",
-    simCard: "123456",
-    deviceType: "Camera",
-    dateAdded: new Date().toISOString(),
-    status: "active",
-    history: [],
-  },
-  {
-    id: 2,
-    name: "Sample Device 2",
-    simCard: "789012",
-    deviceType: "Tablet",
-    dateAdded: new Date().toISOString(),
-    status: "inactive",
-    history: [],
-  },
-];
+// const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Helper: Build simTransfers from devices
 const getSimTransfersFromDevices = (devices) => {
