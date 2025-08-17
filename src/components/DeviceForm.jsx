@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 
 const DeviceForm = ({ onClose, editData }) => {
-  const { addDevice, updateDevice, devices } = useDeviceContext(); // Added devices
+  const { addDevice, updateDevice, devices } = useDeviceContext();
   const { deviceTypes } = useDeviceTypeContext();
 
   const [formData, setFormData] = useState({
@@ -49,29 +49,31 @@ const DeviceForm = ({ onClose, editData }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    // Clear specific errors when field changes
     if (errors[name]) setErrors({ ...errors, [name]: "" });
-    if (errors.duplicate) setErrors({ ...errors, duplicate: "" }); // Clear duplicate error
+    if (name === "simCard" && errors.simConflict) {
+      setErrors({ ...errors, simConflict: "" });
+    }
+    if (errors.duplicate) setErrors({ ...errors, duplicate: "" });
   };
 
-  // Validate form including duplicate check
   const validate = (dateAddedValue) => {
     const newErrors = {};
 
-    // Basic validation
     if (!formData.name.trim()) newErrors.name = "Device name is required";
-    if (!formData.simCard.trim()) newErrors.simCard = "SIM card is required";
+    if (!editData && !formData.simCard.trim()) {
+      newErrors.simCard = "SIM card is required";
+    }
 
     if (useCustomDate) {
       if (!customDate) newErrors.customDate = "Date is required";
       if (!customTime) newErrors.customTime = "Time is required";
     }
 
-    // Check for duplicate device name on same date
     if (formData.name.trim() && dateAddedValue) {
       const datePart = new Date(dateAddedValue).toISOString().split("T")[0];
 
       const isDuplicate = devices.some((device) => {
-        // For editing, exclude current device
         if (editData && device.id === editData.id) return false;
 
         const deviceDate = device.dateAdded.split("T")[0];
@@ -82,8 +84,7 @@ const DeviceForm = ({ onClose, editData }) => {
       });
 
       if (isDuplicate) {
-        newErrors.duplicate =
-          "A device with this name already exists on this date";
+        newErrors.duplicate = "A device with this name already exists";
       }
     }
 
@@ -94,7 +95,6 @@ const DeviceForm = ({ onClose, editData }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Calculate dateAdded value first for validation
     let dateAddedValue;
     if (useCustomDate && customDate && customTime) {
       dateAddedValue = new Date(`${customDate}T${customTime}`).toISOString();
@@ -123,8 +123,20 @@ const DeviceForm = ({ onClose, editData }) => {
       }
       onClose();
     } catch (error) {
-      console.error("Error saving device:", error);
-      setErrors({ submit: "Failed to save device. Please try again." });
+      // console.error("Error saving device:", error);
+
+      // Handle SIM conflict error
+      if (error.message.includes("SIM card is already used by device")) {
+        setErrors({ simConflict: error.message });
+      }
+      // Handle device name conflict
+      else if (error.message.includes("already exists")) {
+        setErrors({ duplicate: error.message });
+      }
+      // General error
+      else {
+        setErrors({ submit: "Failed to save device. Please try again." });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -190,13 +202,20 @@ const DeviceForm = ({ onClose, editData }) => {
                     value={formData.simCard}
                     onChange={handleChange}
                     className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
-                      errors.simCard ? "border-red-500" : "border-gray-300"
+                      errors.simCard || errors.simConflict
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                     placeholder="e.g., SIM-123456"
                   />
                   {errors.simCard && (
                     <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                       <FiInfo size={14} /> {errors.simCard}
+                    </p>
+                  )}
+                  {errors.simConflict && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FiInfo size={14} /> {errors.simConflict}
                     </p>
                   )}
                 </div>
@@ -286,10 +305,16 @@ const DeviceForm = ({ onClose, editData }) => {
             </div>
           </div>
 
-          {/* Duplicate error message */}
+          {/* Error messages */}
           {errors.duplicate && (
             <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
               <p className="text-sm text-red-700">{errors.duplicate}</p>
+            </div>
+          )}
+
+          {errors.simConflict && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <p className="text-sm text-red-700">{errors.simConflict}</p>
             </div>
           )}
 

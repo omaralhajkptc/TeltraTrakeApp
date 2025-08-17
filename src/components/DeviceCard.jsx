@@ -102,6 +102,13 @@ const DeviceCard = ({
     onEdit(device);
   }, [onEdit, device]);
 
+  // New function to handle history click
+  const handleHistoryClick = useCallback(() => {
+    if (!isUpdating && !isTogglingStatus) {
+      onHistory(device);
+    }
+  }, [onHistory, device, isUpdating, isTogglingStatus]);
+
   const statusColors = {
     active: {
       bg: "bg-green-100",
@@ -209,12 +216,16 @@ const DeviceCard = ({
             </div>
             <p className="text-sm text-gray-700">
               {device?.dateAdded
-                ? new Date(device.dateAdded).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
+                ? new Date(device.dateAdded).toLocaleString("en-US", {
                     year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    // second: "2-digit",
+                    hour12: true, // remove this line if you prefer 24-hour format
                   })
-                : "Unknown"}
+                : "N/A"}
             </p>
           </div>
 
@@ -223,10 +234,18 @@ const DeviceCard = ({
               <RefreshIcon size={16} className="text-gray-500 flex-shrink-0" />
               <p className="text-xs text-gray-500">Changes</p>
             </div>
-            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+            <button
+              onClick={handleButtonClick(handleHistoryClick)}
+              className={`text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit ${
+                isUpdating || isTogglingStatus
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-blue-200 cursor-pointer"
+              } transition-colors`}
+              disabled={isUpdating || isTogglingStatus}
+            >
               {device?.history?.length || 0}{" "}
               {device?.history?.length === 1 ? "change" : "changes"}
-            </span>
+            </button>
           </div>
 
           <div className="flex flex-col">
@@ -405,8 +424,14 @@ const DeviceCard = ({
               <EditIcon size={18} />
             </button>
             <button
-              onClick={handleButtonClick(onHistory)}
-              className="p-2 rounded-lg hover:bg-green-50 transition-colors text-green-600"
+              onClick={handleButtonClick(handleHistoryClick)}
+              className={`p-2 rounded-lg hover:bg-green-50 transition-colors ${
+                isUpdating || isTogglingStatus
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              } ${
+                device?.history?.length > 0 ? "text-green-600" : "text-gray-400"
+              }`}
               title="History"
               disabled={isUpdating || isTogglingStatus}
             >

@@ -166,6 +166,22 @@ export const DeviceProvider = ({ children }) => {
       history: [],
     };
 
+    // Check for duplicate SIM
+    const simInUse = devices.some(
+      (d) =>
+        d.simCard.trim().toLowerCase() === device.simCard.trim().toLowerCase()
+    );
+
+    if (simInUse) {
+      const conflictingDevice = devices.find(
+        (d) =>
+          d.simCard.trim().toLowerCase() === device.simCard.trim().toLowerCase()
+      );
+      throw new Error(
+        `SIM card is already used by device: ${conflictingDevice.name}`
+      );
+    }
+
     // Check for duplicate name on same date
     const datePart = now.split("T")[0];
     const isDuplicate = devices.some((d) => {

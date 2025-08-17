@@ -1,51 +1,11 @@
 {
   "devices": [
     {
-      "name": "T634",
-      "simCard": "kjkj",
-      "deviceType": "other",
-      "dateAdded": "2025-08-16T07:01:37.759Z",
-      "status": "inactive",
-      "history": [
-        {
-          "oldSim": "35667",
-          "newSim": "kjkj",
-          "changedAt": "2025-08-16T07:09:41.669Z"
-        }
-      ],
-      "id": 1
-    },
-    {
-      "name": "T6203",
-      "simCard": "pkpk",
-      "deviceType": "Push To Talk",
-      "dateAdded": "2025-08-16T07:02:07.394Z",
-      "status": "active",
-      "history": [
-        {
-          "oldSim": "7567789",
-          "newSim": "kjkj",
-          "changedAt": "2025-08-16T07:02:53.452Z"
-        },
-        {
-          "oldSim": "kjkj",
-          "newSim": "222",
-          "changedAt": "2025-08-16T07:09:38.626Z"
-        },
-        {
-          "oldSim": "222",
-          "newSim": "pkpk",
-          "changedAt": "2025-08-16T07:59:43.691Z"
-        }
-      ],
-      "id": 2
-    },
-    {
       "name": "T6709",
       "simCard": "32323",
       "deviceType": "Camera",
       "dateAdded": "2025-08-16T07:02:32.130Z",
-      "status": "inactive",
+      "status": "active",
       "history": [
         {
           "oldSim": "508999",
@@ -75,7 +35,7 @@
       "simCard": "356671",
       "deviceType": "other",
       "dateAdded": "2025-08-16T08:37:10.772Z",
-      "status": "inactive",
+      "status": "active",
       "history": [],
       "id": 4
     },
@@ -84,7 +44,7 @@
       "simCard": "klkl",
       "deviceType": "Book",
       "dateAdded": "2025-08-17T10:06:51.062Z",
-      "status": "inactive",
+      "status": "active",
       "history": [
         {
           "oldSim": "75600",
@@ -96,12 +56,27 @@
     },
     {
       "name": "T620",
-      "simCard": "35667",
+      "simCard": "kjkj",
       "deviceType": "other",
       "dateAdded": "2025-08-17T11:05:17.759Z",
       "status": "active",
-      "history": [],
+      "history": [
+        {
+          "oldSim": "35667",
+          "newSim": "kjkj",
+          "changedAt": "2025-08-17T11:40:55.629Z"
+        }
+      ],
       "id": 6
+    },
+    {
+      "name": "T6202",
+      "simCard": "356678",
+      "deviceType": "other",
+      "dateAdded": "2025-08-17T11:33:08.225Z",
+      "status": "active",
+      "history": [],
+      "id": 7
     }
   ],
   "deviceTypes": [
@@ -128,6 +103,18 @@
     {
       "name": "Book",
       "id": 6
+    },
+    {
+      "name": "Cable",
+      "id": 7
+    },
+    {
+      "name": "Huawei",
+      "id": 8
+    },
+    {
+      "name": "iphone",
+      "id": 9
     }
   ]
 }

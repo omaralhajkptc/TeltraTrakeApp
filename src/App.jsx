@@ -11,7 +11,7 @@ import Footer from "./components/Footer"; // Import the new Footer component
 import axios from "axios";
 
 // Set base URL for API
-axios.defaults.baseURL = "https://device-manager-backend.onrender.com";
+// axios.defaults.baseURL = "https://device-manager-backend.onrender.com";
 
 function App() {
   useEffect(() => {
