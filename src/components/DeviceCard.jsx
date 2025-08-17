@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import EditIcon from "./icons/Edit";
 import TrashIcon from "./icons/Trash";
 import ClockIcon from "./icons/Clock";
@@ -26,18 +26,26 @@ const DeviceCard = ({
   const [expanded, setExpanded] = useState(false);
   const [localUpdateError, setLocalUpdateError] = useState(null);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+  const [conflictDevice, setConflictDevice] = useState(null);
 
   useEffect(() => {
     if (updateError) {
-      setLocalUpdateError(updateError);
+      setLocalUpdateError(updateError.message || "Failed to update SIM");
+      if (updateError.conflictDevice) {
+        setConflictDevice(updateError.conflictDevice);
+      } else {
+        setConflictDevice(null);
+      }
     } else if (newSim) {
       setLocalUpdateError(null);
+      setConflictDevice(null);
     }
   }, [newSim, updateError]);
 
   const toggleSimUpdate = () => {
     setShowSimUpdate(!showSimUpdate);
     setLocalUpdateError(null);
+    setConflictDevice(null);
     if (showSimUpdate) {
       onSimChange("");
     }
@@ -46,14 +54,19 @@ const DeviceCard = ({
   const handleSimUpdate = async () => {
     if (!newSim.trim()) {
       setLocalUpdateError("SIM number cannot be empty");
+      setConflictDevice(null);
       return;
     }
 
     try {
       await onSimUpdate();
       setShowSimUpdate(false);
+      setConflictDevice(null);
     } catch (error) {
       setLocalUpdateError(error.message || "Failed to update SIM");
+      if (error.conflictDevice) {
+        setConflictDevice(error.conflictDevice);
+      }
     }
   };
 
@@ -85,7 +98,10 @@ const DeviceCard = ({
     handler?.();
   };
 
-  // Status color mapping
+  const handleEdit = useCallback(() => {
+    onEdit(device);
+  }, [onEdit, device]);
+
   const statusColors = {
     active: {
       bg: "bg-green-100",
@@ -126,8 +142,8 @@ const DeviceCard = ({
       } ${isUpdating ? "opacity-70" : ""}`}
       onClick={toggleExpanded}
     >
-      {/* Loading overlay */}
-      {(isUpdating || isTogglingStatus) && (
+      {/* Loading overlay - only for SIM update */}
+      {isUpdating && (
         <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
           <Spinner size="md" />
         </div>
@@ -276,6 +292,7 @@ const DeviceCard = ({
                   onChange={(e) => {
                     onSimChange(e.target.value);
                     setLocalUpdateError(null);
+                    setConflictDevice(null);
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter new SIM number"
@@ -295,7 +312,15 @@ const DeviceCard = ({
                 </button>
               </div>
               {localUpdateError && (
-                <p className="text-xs text-red-500 px-1">{localUpdateError}</p>
+                <div className="text-xs text-red-500 px-1">
+                  {localUpdateError}
+                  {/* {conflictDevice && (
+                    <div className="mt-1">
+                      <span className="font-semibold">Used in device:</span>{" "}
+                      {conflictDevice.name} (ID: {conflictDevice.id})
+                    </div>
+                  )} */}
+                </div>
               )}
               <p className="text-xs text-gray-500 text-center">
                 Press Enter or click Update to save changes
@@ -325,6 +350,7 @@ const DeviceCard = ({
                       onChange={(e) => {
                         onSimChange(e.target.value);
                         setLocalUpdateError(null);
+                        setConflictDevice(null);
                       }}
                       onKeyDown={handleKeyDown}
                       onClick={(e) => e.stopPropagation()}
@@ -345,9 +371,15 @@ const DeviceCard = ({
                     </button>
                   </div>
                   {localUpdateError && (
-                    <p className="text-xs text-red-500 px-1">
+                    <div className="text-xs text-red-500 px-1">
                       {localUpdateError}
-                    </p>
+                      {conflictDevice && (
+                        <div className="mt-1">
+                          <span className="font-semibold">Used in device:</span>{" "}
+                          {conflictDevice.name} (ID: {conflictDevice.id})
+                        </div>
+                      )}
+                    </div>
                   )}
                   <p className="text-xs text-gray-500">
                     Press Enter or click Update to save changes
@@ -365,10 +397,10 @@ const DeviceCard = ({
         >
           <div className="flex gap-1">
             <button
-              onClick={handleButtonClick(onEdit)}
+              onClick={handleButtonClick(handleEdit)}
               className="p-2 rounded-lg hover:bg-blue-50 transition-colors text-blue-600"
               title="Edit"
-              disabled={isUpdating}
+              disabled={isUpdating || isTogglingStatus}
             >
               <EditIcon size={18} />
             </button>
@@ -376,7 +408,7 @@ const DeviceCard = ({
               onClick={handleButtonClick(onHistory)}
               className="p-2 rounded-lg hover:bg-green-50 transition-colors text-green-600"
               title="History"
-              disabled={isUpdating}
+              disabled={isUpdating || isTogglingStatus}
             >
               <ClockIcon size={18} />
             </button>
@@ -384,7 +416,7 @@ const DeviceCard = ({
               onClick={handleButtonClick(onDelete)}
               className="p-2 rounded-lg hover:bg-red-50 transition-colors text-red-600"
               title="Delete"
-              disabled={isUpdating}
+              disabled={isUpdating || isTogglingStatus}
             >
               <TrashIcon size={18} />
             </button>

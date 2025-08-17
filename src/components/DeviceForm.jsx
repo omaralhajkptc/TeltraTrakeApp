@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 
 const DeviceForm = ({ onClose, editData }) => {
-  const { addDevice, updateDevice } = useDeviceContext();
+  const { addDevice, updateDevice, devices } = useDeviceContext(); // Added devices
   const { deviceTypes } = useDeviceTypeContext();
 
   const [formData, setFormData] = useState({
@@ -50,10 +50,14 @@ const DeviceForm = ({ onClose, editData }) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     if (errors[name]) setErrors({ ...errors, [name]: "" });
+    if (errors.duplicate) setErrors({ ...errors, duplicate: "" }); // Clear duplicate error
   };
 
-  const validate = () => {
+  // Validate form including duplicate check
+  const validate = (dateAddedValue) => {
     const newErrors = {};
+
+    // Basic validation
     if (!formData.name.trim()) newErrors.name = "Device name is required";
     if (!formData.simCard.trim()) newErrors.simCard = "SIM card is required";
 
@@ -62,13 +66,43 @@ const DeviceForm = ({ onClose, editData }) => {
       if (!customTime) newErrors.customTime = "Time is required";
     }
 
+    // Check for duplicate device name on same date
+    if (formData.name.trim() && dateAddedValue) {
+      const datePart = new Date(dateAddedValue).toISOString().split("T")[0];
+
+      const isDuplicate = devices.some((device) => {
+        // For editing, exclude current device
+        if (editData && device.id === editData.id) return false;
+
+        const deviceDate = device.dateAdded.split("T")[0];
+        return (
+          device.name.toLowerCase() === formData.name.trim().toLowerCase() &&
+          deviceDate === datePart
+        );
+      });
+
+      if (isDuplicate) {
+        newErrors.duplicate =
+          "A device with this name already exists on this date";
+      }
+    }
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const validationErrors = validate();
+
+    // Calculate dateAdded value first for validation
+    let dateAddedValue;
+    if (useCustomDate && customDate && customTime) {
+      dateAddedValue = new Date(`${customDate}T${customTime}`).toISOString();
+    } else {
+      dateAddedValue = editData ? editData.dateAdded : new Date().toISOString();
+    }
+
+    const validationErrors = validate(dateAddedValue);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -77,15 +111,6 @@ const DeviceForm = ({ onClose, editData }) => {
     }
 
     try {
-      let dateAddedValue;
-      if (useCustomDate && customDate && customTime) {
-        dateAddedValue = new Date(`${customDate}T${customTime}`).toISOString();
-      } else {
-        dateAddedValue = editData
-          ? editData.dateAdded
-          : new Date().toISOString();
-      }
-
       const deviceData = {
         ...formData,
         dateAdded: dateAddedValue,
@@ -153,27 +178,31 @@ const DeviceForm = ({ onClose, editData }) => {
                   </p>
                 )}
               </div>
-              <div className="mb-4 sm:mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                  <FiCpu size={16} />
-                  SIM Card Number
-                </label>
-                <input
-                  type="text"
-                  name="simCard"
-                  value={formData.simCard}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
-                    errors.simCard ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="e.g., SIM-123456"
-                />
-                {errors.simCard && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <FiInfo size={14} /> {errors.simCard}
-                  </p>
-                )}
-              </div>
+              {!editData ? (
+                <div className="mb-4 sm:mb-5">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                    <FiCpu size={16} />
+                    SIM Card Number
+                  </label>
+                  <input
+                    type="text"
+                    name="simCard"
+                    value={formData.simCard}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 ${
+                      errors.simCard ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="e.g., SIM-123456"
+                  />
+                  {errors.simCard && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                      <FiInfo size={14} /> {errors.simCard}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <span></span>
+              )}
             </div>
 
             <div>
@@ -257,8 +286,15 @@ const DeviceForm = ({ onClose, editData }) => {
             </div>
           </div>
 
+          {/* Duplicate error message */}
+          {errors.duplicate && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <p className="text-sm text-red-700">{errors.duplicate}</p>
+            </div>
+          )}
+
           {errors.submit && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4 mt-2">
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
               <p className="text-sm text-red-700">{errors.submit}</p>
             </div>
           )}

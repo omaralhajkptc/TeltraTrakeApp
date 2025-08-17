@@ -1,28 +1,31 @@
 // src/components/icons/Spinner.jsx
 export default function Spinner({ size = 24, color = "currentColor" }) {
+  // Map string sizes to numeric values
+  const sizeMap = {
+    sm: 18,
+    md: 24,
+    lg: 36,
+  };
+
+  const computedSize = typeof size === "string" ? sizeMap[size] || 24 : size;
+
   return (
     <svg
-      width={size}
-      height={size}
+      width={computedSize}
+      height={computedSize}
       viewBox="0 0 24 24"
       fill="none"
       stroke={color}
       strokeWidth="2"
       className="animate-spin"
     >
-      <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
+      <style>
+        {`@keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-        .animate-spin {
-          animation: spin 1s linear infinite;
-        }
-      `}</style>
+        .animate-spin { animation: spin 1s linear infinite; }`}
+      </style>
       <circle cx="12" cy="12" r="10" strokeOpacity="0.25" fill="none" />
       <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
     </svg>

@@ -42,10 +42,10 @@
     },
     {
       "name": "T6709",
-      "simCard": "111",
+      "simCard": "32323",
       "deviceType": "Camera",
       "dateAdded": "2025-08-16T07:02:32.130Z",
-      "status": "active",
+      "status": "inactive",
       "history": [
         {
           "oldSim": "508999",
@@ -56,18 +56,52 @@
           "oldSim": "kjkj",
           "newSim": "111",
           "changedAt": "2025-08-16T07:02:49.695Z"
+        },
+        {
+          "oldSim": "111",
+          "newSim": "1212",
+          "changedAt": "2025-08-17T10:18:39.309Z"
+        },
+        {
+          "oldSim": "1212",
+          "newSim": "3232",
+          "changedAt": "2025-08-17T10:18:42.270Z"
         }
       ],
       "id": 3
     },
     {
-      "name": "T6204",
-      "simCard": "356670",
+      "name": "T660",
+      "simCard": "356671",
       "deviceType": "other",
       "dateAdded": "2025-08-16T08:37:10.772Z",
-      "status": "active",
+      "status": "inactive",
       "history": [],
       "id": 4
+    },
+    {
+      "name": "T6203",
+      "simCard": "klkl",
+      "deviceType": "Book",
+      "dateAdded": "2025-08-17T10:06:51.062Z",
+      "status": "inactive",
+      "history": [
+        {
+          "oldSim": "75600",
+          "newSim": "klkl",
+          "changedAt": "2025-08-17T10:07:20.477Z"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "name": "T620",
+      "simCard": "35667",
+      "deviceType": "other",
+      "dateAdded": "2025-08-17T11:05:17.759Z",
+      "status": "active",
+      "history": [],
+      "id": 6
     }
   ],
   "deviceTypes": [
@@ -90,6 +124,10 @@
     {
       "name": "Tablet",
       "id": 5
+    },
+    {
+      "name": "Book",
+      "id": 6
     }
   ]
 }

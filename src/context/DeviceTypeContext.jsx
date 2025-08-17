@@ -2,9 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 
 const DeviceTypeContext = createContext();
 
-// Fallback to localhost in development
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-// const API_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const useDeviceTypeContext = () => useContext(DeviceTypeContext);
 
@@ -12,13 +10,6 @@ export const DeviceTypeProvider = ({ children }) => {
   const [deviceTypes, setDeviceTypes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Sample data for development fallback
-  const sampleDeviceTypes = [
-    { id: 1, name: "Camera" },
-    { id: 2, name: "Tablet" },
-    { id: 3, name: "Push To Talk" },
-  ];
 
   useEffect(() => {
     fetchDeviceTypes();
@@ -35,11 +26,6 @@ export const DeviceTypeProvider = ({ children }) => {
     } catch (error) {
       console.error("Error fetching device types:", error);
       setError("Failed to load device types");
-
-      // Use sample data only in development
-      if (import.meta.env.DEV) {
-        setDeviceTypes(sampleDeviceTypes);
-      }
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +35,6 @@ export const DeviceTypeProvider = ({ children }) => {
     try {
       const trimmedType = typeName.trim();
 
-      // Check if type already exists
       if (deviceTypes.some((type) => type.name === trimmedType)) {
         throw new Error("Device type already exists");
       }

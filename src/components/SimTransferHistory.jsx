@@ -146,6 +146,7 @@ const SimTransferHistory = ({ transfers }) => {
 
             <div className="relative border-l-2 border-gray-200 ml-4 space-y-8">
               {searchResults.map((transfer, idx) => {
+                if (idx == 0) return;
                 const {
                   color,
                   badge,

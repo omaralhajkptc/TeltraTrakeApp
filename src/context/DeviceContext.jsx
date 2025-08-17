@@ -10,16 +10,12 @@ import axios from "axios";
 
 const DeviceContext = createContext();
 
-// Fallback to localhost in development
 const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001";
-// const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Helper: Build simTransfers from devices
 const getSimTransfersFromDevices = (devices) => {
   const transfers = [];
 
   devices.forEach((device) => {
-    // Initial assignment
     transfers.push({
       sim: device.simCard,
       fromDevice: null,
@@ -27,7 +23,6 @@ const getSimTransfersFromDevices = (devices) => {
       timestamp: device.dateAdded,
     });
 
-    // History
     device.history.forEach((historyItem) => {
       transfers.push({
         sim: historyItem.oldSim,
@@ -61,7 +56,6 @@ export const DeviceProvider = ({ children }) => {
     searchTerm: "",
   });
 
-  // Compute transfers directly from devices using useMemo
   const simTransfers = useMemo(() => {
     return getSimTransfersFromDevices(devices);
   }, [devices]);
@@ -72,15 +66,10 @@ export const DeviceProvider = ({ children }) => {
       const response = await axios.get(`${API_URL}/devices`);
       setDevices(response.data);
       setFilteredDevices(response.data);
+      setError(null);
     } catch (err) {
       setError("Failed to load data from server");
       console.error("API Error:", err);
-
-      // Use sample data only in development
-      if (import.meta.env.DEV) {
-        setDevices(getSampleDevices());
-        setFilteredDevices(getSampleDevices());
-      }
     } finally {
       setIsLoading(false);
     }
@@ -127,11 +116,9 @@ export const DeviceProvider = ({ children }) => {
 
   const updateSimCard = async (id, newSim) => {
     const device = devices.find((d) => d.id === id);
-    if (!device) return { success: false, message: "Device not found" };
+    if (!device) throw new Error("Device not found");
 
     const newSimTrimmed = newSim.trim();
-
-    // Check if SIM is already used by another device
     const simInUse = devices.some(
       (d) => d.id !== id && d.simCard === newSimTrimmed
     );
@@ -141,12 +128,11 @@ export const DeviceProvider = ({ children }) => {
         (d) => d.id !== id && d.simCard === newSimTrimmed
       );
 
-      return {
-        success: false,
-        message: `SIM is already used by ${
-          conflictingDevice?.name || "another device"
-        }`,
-      };
+      const error = new Error(
+        `SIM is already used by ${conflictingDevice?.name || "another device"}`
+      );
+      error.conflictDevice = conflictingDevice;
+      throw error;
     }
 
     const now = new Date().toISOString();
@@ -165,14 +151,9 @@ export const DeviceProvider = ({ children }) => {
         history: [...device.history, historyEntry],
       });
       setDevices(devices.map((d) => (d.id === id ? response.data : d)));
-      return { success: true };
     } catch (err) {
       console.error("API update failed:", err);
-      return {
-        success: false,
-        message: "API update failed",
-        details: err.response?.data || err.message,
-      };
+      throw new Error("Failed to update SIM");
     }
   };
 
@@ -185,20 +166,26 @@ export const DeviceProvider = ({ children }) => {
       history: [],
     };
 
+    // Check for duplicate name on same date
+    const datePart = now.split("T")[0];
+    const isDuplicate = devices.some((d) => {
+      const deviceDate = d.dateAdded.split("T")[0];
+      return (
+        d.name.toLowerCase() === device.name.toLowerCase() &&
+        deviceDate === datePart
+      );
+    });
+
+    if (isDuplicate) {
+      throw new Error("A device with this name already exists on this date");
+    }
+
     try {
       const response = await axios.post(`${API_URL}/devices`, newDevice);
       setDevices([...devices, response.data]);
       return response.data;
     } catch (err) {
       console.error("Add device error:", err);
-
-      // Fallback to local state only in development
-      if (import.meta.env.DEV) {
-        const localNewDevice = { ...newDevice, id: Date.now() };
-        setDevices([...devices, localNewDevice]);
-        return localNewDevice;
-      }
-
       throw err;
     }
   };
@@ -230,6 +217,43 @@ export const DeviceProvider = ({ children }) => {
     }
   };
 
+  const updateDevice = async (id, updatedFields) => {
+    try {
+      const device = devices.find((d) => d.id === id);
+      if (!device) throw new Error("Device not found");
+
+      const updatedDevice = { ...device, ...updatedFields };
+
+      // Check for duplicate name on same date
+      const datePart = new Date(updatedDevice.dateAdded)
+        .toISOString()
+        .split("T")[0];
+      const isDuplicate = devices.some((d) => {
+        if (d.id === id) return false; // Skip current device
+        const deviceDate = new Date(d.dateAdded).toISOString().split("T")[0];
+        return (
+          d.name.toLowerCase() === updatedDevice.name.toLowerCase() &&
+          deviceDate === datePart
+        );
+      });
+
+      if (isDuplicate) {
+        throw new Error("A device with this name already exists on this date");
+      }
+
+      const response = await axios.put(
+        `${API_URL}/devices/${id}`,
+        updatedDevice
+      );
+      setDevices(devices.map((d) => (d.id === id ? response.data : d)));
+
+      return response.data;
+    } catch (err) {
+      console.error("Update device error:", err);
+      throw err;
+    }
+  };
+
   const getUniqueStatuses = () => {
     return [...new Set(devices.map((device) => device.status))];
   };
@@ -255,6 +279,7 @@ export const DeviceProvider = ({ children }) => {
         getUniqueDeviceTypes,
         currentFilters,
         simTransfers,
+        updateDevice,
       }}
     >
       {children}
